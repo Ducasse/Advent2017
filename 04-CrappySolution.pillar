@@ -1,0 +1,68 @@
+!! Day 4: High-Entropy Passphrases
+
+
+
+!!! First test
+
+[[[
+Advent04Test >> testValidPassPhrases
+
+	self assert: (Advent04 new isValidPassPhrase:  'aa bb cc dd').
+	self deny: (Advent04 new isValidPassPhrase:  'aa bb cc dd aa').
+	self assert: (Advent04 new isValidPassPhrase:  'aa bb cc dd aaa').
+]]]
+
+[[[
+Advent04 >> isValidPassPhrase: aString
+ 	| input words |
+	input := (Character space split: aString).
+	words := OrderedCollection new. 
+	input do: [ :each | (words includes: each) 
+							ifTrue: [^ false ]
+							ifFalse: [ words add: each ]].
+	^ true
+]]]
+
+
+[[[
+Advent04Test >> testNumberOfValidPassPhrases
+
+	self assert: (Advent04 new numberOfValidPassPhrases:  
+'aa bb cc dd
+aa bb cc dd aa
+aa bb cc dd aaa' ) equals: 2
+]]]
+
+
+[[[
+Advent04 >> numberOfValidPassPhrases: aString
+	 | inputs |
+	inputs := (Character cr split: aString).
+	^ inputs count: [ :each |  self isValidPassPhrase: each ].
+]]]
+
+
+!!! Part two
+
+
+[[[
+Advent04Test >> testValidPassPhrasesPartTwo
+
+	self assert: (Advent04 new isValidUniquePassPhrase: 'abcde fghij').
+	self deny: (Advent04 new isValidUniquePassPhrase: 'abcde xyz ecdab').
+	self assert: (Advent04 new isValidUniquePassPhrase: 'a ab abc abd abf abj').
+	self assert: (Advent04 new isValidUniquePassPhrase: ' iiii oiii ooii oooi oooo').
+	self deny: (Advent04 new isValidUniquePassPhrase: 'oiii ioii iioi iiio').
+]]]
+
+
+[[[
+Advent04 >> isValidUniquePassPhrase: aString
+ 	| input words |
+	input := (Character space split: aString).
+	words := OrderedCollection new. 
+	input do: [ :each | (words includes: each sorted) 
+								ifTrue: [^ false ]
+								ifFalse: [ words add: each sorted ]].
+	^ true
+]]]
