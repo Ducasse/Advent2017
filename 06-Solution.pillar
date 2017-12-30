@@ -79,7 +79,7 @@ Advent06Allocator >> prepareRedistributionOf: anIndex
 	bank at: anIndex put: 0
 ]]]
 
-!!! About copying
+!!! About copying the bank
 
 Since the method ==prepareRedistributionOf:== will modify the bank array, we have to be cautious
 because this literal array is stored in the compiled method itself and it will be modified while we would like 
@@ -93,12 +93,15 @@ Advent06Allocator >> bank: aBank
 	bank := aBank copy
 ]]]
 
-However first we should change its name to reflect that it will work on a copy (for example, ==copyAndSetBank:==)
+However first we should change its name to reflect that it will work on a copy (for example, ==copyAndSetBank:==).
+Second we should think about the invariant that 
 
 In the test testPrepareRedistribution we copy the array to make sure that we will work on a new version.
 
 
 !!! Redistributing one block
+
+Let us write a test to cover the redistribution of the third block containing 7 elements. 
 
 [[[
 Advent06AllocatorTest >> testRedistributeBlocksAtIndex
@@ -107,11 +110,47 @@ Advent06AllocatorTest >> testRedistributeBlocksAtIndex
 	self assert: (reallocator redistributeIndex: 3) equals: #(2 4 1 2)
 ]]]
 
+The implementation is the following: we prepare the bank and then we increment the value of the elements
+paying attention that the bank wraps.
+We return the bank to ease test writing and the following method.
+[[[
+Advent06Allocator >> redistributeIndex: anIndex
+	| currentIndex |
+	self prepareRedistributionOf: anIndex.
+	currentIndex := anIndex + 1.
+	amountToRedistribute
+		timesRepeat: [ bank atWrap: currentIndex put: (bank atWrap: currentIndex) + 1.
+			currentIndex := currentIndex + 1 ].
+	^ bank
+]]]
 
 
+!!! Number of redistributions
+
+Now we specify the last test to compute the number of iterations that should be done. 
+
+[[[
+Advent06AllocatorTest >> testRedistributeNoPattern
+	| reallocator |
+	reallocator := Advent06Allocator new bank: #(0 2 7 0) copy.
+	self assert: reallocator redistributeNoPattern equals: 5
+]]]
 
 
+The iterations is the number of redistribution before finding the same configuration of the blocks.
+We need a way to keep the bank configuration to identify that we loop. We could produce a hash number based on the bank distribution. 
+For now we just copy the bank and check that we did not encounter a new one. 
 
+[[[
+Advent06Allocator >> redistributeNoPattern
+	| redistributions redistribution |
+	redistributions := OrderedCollection new.
+	redistributions add: bank copy.
+	[ redistribution := self redistributeIndex: self indexOfLargest.
+	(redistributions includes: redistribution) not ]
+		whileTrue: [ redistributions add: redistribution copy ].
+	^ redistributions size
+]]]
 
 
 
@@ -119,7 +158,10 @@ Advent06AllocatorTest >> testRedistributeBlocksAtIndex
 Given the initial block counts in your puzzle input, how many redistribution cycles must be completed before a configuration is produced that has been seen before?
 
 [[[
-0 5 10 0 11 14 13 4 11 8 8 7 1 4 12 11
+Advent06AllocatorTest >> testPuzzle
+	| reallocator |
+	reallocator := Advent06Allocator new bank: #(0 5 10 0 11 14 13 4 11 8 8 7 1 4 12 11) copy.
+	self assert: reallocator redistributeNoPattern equals: ???
 ]]]
 
 
